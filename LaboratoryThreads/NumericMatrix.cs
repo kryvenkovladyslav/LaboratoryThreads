@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace LaboratoryThreads
@@ -7,7 +8,7 @@ namespace LaboratoryThreads
     {
         private int rows;
         private int columns;
-        private double[,] matrix;
+        private readonly double[,] matrix;
 
         public int Rows
         {
@@ -37,6 +38,14 @@ namespace LaboratoryThreads
             Columns = array.GetLength(1);
 
             matrix = (double[,])array.Clone();
+        }
+        public NumericMatrix ThreadMultiply(IMatrixThreadMultiplier threadMultiplier, int threadsCount)
+        {
+            //var result = threadMultiplier.ThreadMultiply((double[,])matrix.Clone(), threadsCount);
+
+
+
+            return null;
         }
         private NumericMatrix Multiply(NumericMatrix other)
         {

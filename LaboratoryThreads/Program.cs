@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 
 namespace LaboratoryThreads
@@ -41,23 +42,10 @@ namespace LaboratoryThreads
 
             var matrix = new double[,]
             {
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 }
+                {1, 2, 3, 4 },
+                {5, 6, 7, 8 },
+                {9, 10, 11, 12 },
+                {13, 14, 15, 16 }
             };
 
             var vector = new double[,]
@@ -65,17 +53,11 @@ namespace LaboratoryThreads
                 {1 },
                 {2 },
                 {3 },
-                {4 },
-                {5 },
-                {6 },
-                {7 },
-                {8 },
-                {9 }
+                {4 }, 
             };
 
             BlockMultiplier blockMultiplier = new BlockMultiplier();
-            blockMultiplier.ThreadMultiply(matrix, vector, 8);
-
+            blockMultiplier.ThreadMultiply(matrix, vector, 4);
 
             
 
@@ -83,20 +65,5 @@ namespace LaboratoryThreads
 
 
         }
- 
-        class MyClass
-        {
-            public AutoResetEvent autoReset;
-            public int Result { get; set; }
-            public MyClass(AutoResetEvent resetEvent) => autoReset = resetEvent;
-
-            public void Sum(object obj)
-            {
-                var temp = ((int)obj) + 40;
-                Result = temp;
-                autoReset.Set();
-            }
-        }
-       
     }
 }

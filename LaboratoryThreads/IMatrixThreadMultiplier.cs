@@ -1,7 +1,7 @@
 ﻿namespace LaboratoryThreads
 {
-    internal interface IMatrixThreadMultiplier
+    public interface IMatrixThreadMultiplier<TMatrix>
     {
-        public double[,] ThreadMultiply(double[,] matrix, double[,] vector, int threadsCount);
+        public INumericMatrix<TMatrix> ThreadMultiply(INumericMatrix<TMatrix> matrix, INumericMatrix<TMatrix> vector, int threadsCount);
     }
 }

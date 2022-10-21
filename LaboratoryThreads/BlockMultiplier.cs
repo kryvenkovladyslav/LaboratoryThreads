@@ -1,11 +1,13 @@
-﻿using System;
+﻿using LaboratoryThreads.Events;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace LaboratoryThreads
 {
-    internal sealed class BlockMultiplier : IMatrixThreadMultiplier
+    public sealed class BlockMultiplier<TMatrix> : IMatrixThreadMultiplier<TMatrix>
     {
+        public event EventHandler<GetPairEventArgs> OnGetPair;
         private sealed class ThreadMultiplier
         {
             public AutoResetEvent AutoResetEvent { get; set; }
@@ -43,17 +45,21 @@ namespace LaboratoryThreads
 
         }
         private Block[,] blocks;
+        private Block[,] blockVectors;
       
-        public BlockMultiplier() { }
-        public double[,] ThreadMultiply(double[,] matrix, double[,] vector,int threadsCount)
+        public BlockMultiplier(INumericMatrix<TMatrix> matrix) { }
+       
+        public INumericMatrix<TMatrix> ThreadMultiply(INumericMatrix<TMatrix> matrix, INumericMatrix<TMatrix> vector, int threadsCount)
         {
-            var rowsCount = matrix.GetLength(0);
-            var columnsCount = matrix.GetLength(1);
+            var rowsCount = matrix.Rows;
+            var columnsCount = matrix.Columns;
 
             double[,] newMatrix;
             double[,] newVector;
-            int newRowsCount = rowsCount;
-            int newColumnsCount = columnsCount;
+            double[,] currentMatrix = matrix.ToArray();
+            double[,] currentVecotor = vector.ToArray();
+            var newRowsCount = rowsCount;
+            var newColumnsCount = columnsCount;
 
             var threadMultiples = GetMultiples(threadsCount);
             var rowMultiples = GetMultiples(rowsCount);
@@ -68,16 +74,16 @@ namespace LaboratoryThreads
                 specialNumber = PlusMoral(GetMultiples(newRowsCount), GetMultiples(newColumnsCount), threadMultiples);
             } while (specialNumber != 0);
 
-            RefillElements(out newMatrix, out newVector, ref matrix, ref vector, newRowsCount, newColumnsCount);
+            RefillElements(out newMatrix, out newVector, ref currentMatrix, ref currentVecotor, newRowsCount, newColumnsCount);
 
             for (int i = 0; i < newMatrix.GetLength(0); i++)
-           {
-               for (int j = 0; j < newMatrix.GetLength(1); j++)
-               {
-                   Console.Write(newMatrix[i, j] + "\t");
-               }
-               Console.WriteLine();
-           }
+            {
+                for (int j = 0; j < newMatrix.GetLength(1); j++)
+                {
+                    Console.Write(newMatrix[i, j] + "\t");
+                }
+                Console.WriteLine();
+            }
 
             Console.WriteLine("Vector:");
             for (int i = 0; i < newVector.GetLength(0); i++)
@@ -95,7 +101,7 @@ namespace LaboratoryThreads
 
             var normalizedPair = NormalizePairs(pairs, newRowsCount, newColumnsCount);
             Console.WriteLine(normalizedPair);
-
+            GotNewPair(normalizedPair);
 
             var k = newMatrix.GetLength(0) / normalizedPair.Item1;
             var l = newMatrix.GetLength(1) / normalizedPair.Item2;
@@ -106,7 +112,29 @@ namespace LaboratoryThreads
             var threadMultipliers = new ThreadMultiplier[threadsCount];
             var reseltEvent = new AutoResetEvent[threadsCount];
             blocks = new Block[normalizedPair.Item1, normalizedPair.Item2];
+            blockVectors = new Block[normalizedPair.Item1, normalizedPair.Item2];
             int index = default;
+
+            for (int i = 0; i < blocks.GetLength(0); i++)
+            {
+                for (int j = 0; j < blocks.GetLength(1); j++)
+                {
+                    blockVectors[i, j] = new Block(l, 1);
+                    for (int a = 0; a < l; a++)
+                    {
+                        blockVectors[i, j].matrix[a, 0] = newVector[l * j + a, 0];
+                    }
+                }
+            }
+            Console.WriteLine();
+            for (int s = 0; s < blockVectors.GetLength(0); s++)
+            {
+                for (int j = 0; j < blockVectors.GetLength(1); j++)
+                {
+                    Console.WriteLine(blockVectors[s, j] + "\t");
+                }
+                Console.WriteLine();
+            }
 
             for (int i = 0; i < blocks.GetLength(0); i++)
             {
@@ -119,18 +147,19 @@ namespace LaboratoryThreads
                         {
                             blocks[i, j].matrix[a, b] = newMatrix[k * i + a, l * j + b];
                         }
+
                     }
                     index = i * blocks.GetLength(1) + j;
                     reseltEvent[index] = new AutoResetEvent(false);
-                    threadMultipliers[index] = new ThreadMultiplier(reseltEvent[index], blocks[i, j], newVector);
+                    threadMultipliers[index] = new ThreadMultiplier(reseltEvent[index], blocks[i, j], blockVectors[i, j].matrix);
                     threadMultipliers[index].Perform();
-
                 }
             }
 
+
             Console.WriteLine(WaitHandle.WaitAll(reseltEvent));
 
-            for (int s = 0; s < blocks.GetLength(0); s++)
+            /*for (int s = 0; s < blocks.GetLength(0); s++)
             {
                 for (int j = 0; j < blocks.GetLength(1); j++)
                 {
@@ -138,6 +167,16 @@ namespace LaboratoryThreads
                 }
                 Console.WriteLine();
             }
+            Console.WriteLine();
+            for (int s = 0; s < blockVectors.GetLength(0); s++)
+            {
+                for (int j = 0; j < blockVectors.GetLength(1); j++)
+                {
+                    Console.WriteLine(blockVectors[s, j] + "\t");
+                }
+                Console.WriteLine();
+            }
+            */
 
             for (int i = 0; i < threadMultipliers.Length; i++)
             {
@@ -146,22 +185,22 @@ namespace LaboratoryThreads
                 {
                     for (int j = 0; j < resVector.GetLength(1); j++)
                     {
-                        Console.WriteLine(resVector[s,j] + "\t");
+                        Console.WriteLine(resVector[s, j] + "\t");
                     }
                 }
                 Console.WriteLine();
 
             }
-           
-
-            
 
 
 
 
 
 
-            return null;
+
+
+
+            return matrix;
         }
         private int ModifyLength(int currentLength, int specialNumber)
         {
@@ -256,5 +295,16 @@ namespace LaboratoryThreads
             }
             return result;
         }
+
+        #region events 
+        private void OnGotPair(GetPairEventArgs pair)
+        {
+            var onEvent = Volatile.Read(ref OnGetPair);
+            onEvent?.Invoke(this, pair);
+        }
+        private void GotNewPair((int, int) pair) => OnGotPair(new GetPairEventArgs(pair));
+        #endregion
+
+
     }
 }

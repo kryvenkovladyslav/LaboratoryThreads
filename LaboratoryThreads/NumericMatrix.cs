@@ -3,7 +3,7 @@ using System.Text;
 
 namespace LaboratoryThreads
 {
-    internal sealed class NumericMatrix : Matrix
+    public sealed class NumericMatrix : Matrix
     {
         public override double this[int rowIndex, int columnIndex]
         {
@@ -12,6 +12,7 @@ namespace LaboratoryThreads
         }
         public NumericMatrix(int rows, int columns) : base(rows, columns) { }
         public NumericMatrix(double[,] matrix) : base(matrix) { }
+
         public NumericMatrix Add(NumericMatrix other)
         {
             if (!Rows.Equals(other.Rows)|| !Columns.Equals(other.Columns))

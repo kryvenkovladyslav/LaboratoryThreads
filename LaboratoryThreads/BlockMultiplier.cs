@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace LaboratoryThreads
 {
-    public sealed class BlockMultiplier<TMatrix> : IMatrixThreadMultiplier<TMatrix>
+    public sealed class BlockMultiplier : IMatrixThreadMultiplier
     {
         public event EventHandler<NormalizedPairEventArgs> OnNormalizedPair;
 
@@ -48,18 +48,18 @@ namespace LaboratoryThreads
         private Block[,] blockVectors;
         private Block[,] resultBlockVectors;
       
-        public BlockMultiplier(INumericMatrix<TMatrix> matrix) { }
+        public BlockMultiplier() { }
        
-        public INumericMatrix<TMatrix> ThreadMultiply(INumericMatrix<TMatrix> matrix, INumericMatrix<TMatrix> vector, int threadsCount)
+        public double[,] ThreadMultiply(double[,] matrix, double[,] vector, int threadsCount)
         {
-            var rowsCount = matrix.Rows;
-            var columnsCount = matrix.Columns;
-            var resultVector = new double[rowsCount, vector.Columns];
+            var rowsCount = matrix.GetLength(0);
+            var columnsCount = matrix.GetLength(1);
+            var resultVector = new double[rowsCount, vector.GetLength(0)];
 
             double[,] newMatrix;
             double[,] newVector;
-            double[,] currentMatrix = matrix.ToArray();
-            double[,] currentVecotor = vector.ToArray();
+            double[,] currentMatrix = matrix;
+            double[,] currentVecotor = vector;
             var newRowsCount = rowsCount;
             var newColumnsCount = columnsCount;
 
@@ -69,12 +69,16 @@ namespace LaboratoryThreads
 
             var specialNumber = PlusMoral(rowMultiples, columnMultiples, threadMultiples);
 
-            do
+           /* do
+            {
+               
+            } while (specialNumber != 0);*/
+            while (specialNumber != 0)
             {
                 newRowsCount = rowsCount % 2 == 0 ? rowsCount : ModifyLength(rowsCount, specialNumber);
                 newColumnsCount = columnsCount % 2 == 0 ? columnsCount : ModifyLength(columnsCount, specialNumber);
                 specialNumber = PlusMoral(GetMultiples(newRowsCount), GetMultiples(newColumnsCount), threadMultiples);
-            } while (specialNumber != 0);
+            }
 
             RefillElements(out newMatrix, out newVector, ref currentMatrix, ref currentVecotor, newRowsCount, newColumnsCount);
 
@@ -141,12 +145,12 @@ namespace LaboratoryThreads
             }
 
 
-            double[,] resultNumericVector = new double[matrix.Rows, vector.Columns];
+            double[,] resultNumericVector = new double[matrix.GetLength(0), vector.GetLength(1)];
             List<double[,]> numericBlocksList = new List<double[,]>();
 
             for (int i = 0; i < resultBlockVectors.GetLength(0); i++)
             {
-                Block victor = new Block(k, vector.Columns);
+                Block victor = new Block(k, vector.GetLength(1));
 
                 for (int j = 0; j < resultBlockVectors.GetLength(1); j++)
                 {
@@ -168,14 +172,7 @@ namespace LaboratoryThreads
                 }
             }
 
-            for (int i = 0; i < resultNumericVector.GetLength(0); i++)
-            {
-                for (int j = 0; j < resultNumericVector.GetLength(1); j++)
-                {
-                    Console.WriteLine(resultNumericVector[i,j]);
-                }
-            }
-            return matrix;
+            return resultNumericVector;
         }
         private int ModifyLength(int currentLength, int specialNumber)
         {
@@ -271,6 +268,7 @@ namespace LaboratoryThreads
             return result;
         }
 
+
         #region events 
         private void OnNewNormalizedPair(NormalizedPairEventArgs pair)
         {
@@ -279,7 +277,5 @@ namespace LaboratoryThreads
         }
         private void GotNewPair((int, int) pair) => OnNewNormalizedPair(new NormalizedPairEventArgs(pair));
         #endregion
-
-
     }
 }

@@ -1,9 +1,5 @@
 ﻿using LaboratoryThreads.Events;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using System.Threading;
 
 namespace LaboratoryThreads
 {
@@ -11,44 +7,12 @@ namespace LaboratoryThreads
     {
         public static void Main(string[] args)
         {
-            #region base multiplication
-            /*var firstArray = new double[,]
-            {
-                 {1,2,3,0 },
-                 {4,6,7,2 },
-                 {1,2,3,0 }
-            };
-
-             var secondArray = new double[,]
-             {
-                 {3},
-                 {4},
-                 {7},
-                 {1}
-             };
-
-             var watch = new Stopwatch();
-
-             NumericMatrix first = new NumericMatrix(firstArray);
-             NumericMatrix second = new NumericMatrix(secondArray);
-
-             watch.Start();
-             var result = first * second;
-             watch.Stop();
-
-             Console.WriteLine("Result:");
-             Console.WriteLine(result.ToString());
-             Console.WriteLine("Spent time in ms: " + watch.Elapsed.TotalMilliseconds);*/
-            #endregion
-
             var matrix = new double[,]
             {
-                {1, 2, 3, 4, 5, 6, 1 , 2},
-                {7, 8, 9, 10 , 11, 12, 2, 7},
-                {13, 14, 15, 16, 17, 18, 8, 9 },
-                {19, 20, 21, 22, 23, 24, 12, 1},
-                {19, 20, 21, 22, 23, 24, 12, 1},
-                {5, 5, 6, 7, 8, 9, 7, 5 },
+                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
             };
 
             var vector = new double[,]
@@ -59,14 +23,22 @@ namespace LaboratoryThreads
                 {4 },
                 {5 },
                 {6 },
-                
+                {7 },
+                {8 },
+                {9 }
             };
 
-            BlockMultiplier<NumericMatrix> blockMultiplier = new BlockMultiplier<NumericMatrix>(new NumericMatrix(matrix));
-            blockMultiplier.OnNormalizedPair += GetPairCallback;
 
-            var res = blockMultiplier.ThreadMultiply(new NumericMatrix(matrix), new NumericMatrix(vector), 8);
+            NumericMatrix first = new NumericMatrix(matrix);
+            NumericMatrix second = new NumericMatrix(vector);
+            var defaultMultiplication = first * second;
+            Console.WriteLine(defaultMultiplication);
 
+
+            BlockMultiplier blockMultiplier = new BlockMultiplier();
+            NumericMatrix numericMatrix = new NumericMatrix(matrix);
+            var threadMultiplication = numericMatrix.TreadMultiply(blockMultiplier, new NumericMatrix(vector), 6);
+            Console.WriteLine(threadMultiplication);
 
 
 

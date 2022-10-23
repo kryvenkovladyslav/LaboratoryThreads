@@ -3,28 +3,15 @@ using System.Text;
 
 namespace LaboratoryThreads
 {
-    internal sealed class NumericMatrix : INumericMatrix<NumericMatrix>
+    internal sealed class NumericMatrix : Matrix
     {
-        public double[,] Matrix { get; private set; }
-        public int Columns { get; set;}
-        public int Rows { get; set; }
-        public double this[int rowIndex, int columnIndex]
+        public override double this[int rowIndex, int columnIndex]
         {
-            get => Matrix[rowIndex, columnIndex];
-            set => Matrix[rowIndex, columnIndex] = value;
+            get => CurrentMatrix[rowIndex, columnIndex];
+            protected set => CurrentMatrix[rowIndex, columnIndex] = value;
         }
-        public NumericMatrix(int rows, int columns)
-        {
-            (Rows, Columns) = (rows, columns);
-            Matrix = new double[Rows, Columns];
-        }
-        public NumericMatrix(double[,] array)
-        {
-            Rows = array.GetLength(0);
-            Columns = array.GetLength(1);
-
-            Matrix = (double[,])array.Clone();
-        }
+        public NumericMatrix(int rows, int columns) : base(rows, columns) { }
+        public NumericMatrix(double[,] matrix) : base(matrix) { }
         public NumericMatrix Add(NumericMatrix other)
         {
             if (!Rows.Equals(other.Rows)|| !Columns.Equals(other.Columns))
@@ -90,19 +77,23 @@ namespace LaboratoryThreads
                 return resultMatrix;
             }
         }
+        public NumericMatrix TreadMultiply(IMatrixThreadMultiplier multiplier, NumericMatrix vector, int threadsCount)
+        {
+            var result = multiplier.ThreadMultiply(CurrentMatrix, vector.CurrentMatrix, threadsCount);
+            return ToNumericMatrix(result);
+        }
         public static NumericMatrix operator -(NumericMatrix first, NumericMatrix second) => first.Substract(second);
         public static NumericMatrix operator *(NumericMatrix first, NumericMatrix second) => first.Multiply(second);
         public static NumericMatrix operator +(NumericMatrix first, NumericMatrix second) => first.Add(second);
-        public static NumericMatrix ToMatrix(double[,] array) => new NumericMatrix(array);
-        public double[,] ToArray() => Matrix;
+        public static NumericMatrix ToNumericMatrix(double[,] matrix) => new NumericMatrix(matrix);
         public sealed override string ToString()
         {
             StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < Matrix.GetLength(0); i++)
+            for (int i = 0; i < CurrentMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < Matrix.GetLength(1); j++)
+                for (int j = 0; j < CurrentMatrix.GetLength(1); j++)
                 {
-                    stringBuilder.Append(Matrix[i, j] + "\t");
+                    stringBuilder.Append(CurrentMatrix[i, j] + "\t");
                 }
                 stringBuilder.Append("\n");
             }

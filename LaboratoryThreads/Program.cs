@@ -43,10 +43,12 @@ namespace LaboratoryThreads
 
             var matrix = new double[,]
             {
-                {1, 2, 3, 4, 5, 6 },
-                {7, 8, 9, 10 , 11, 12},
-                {13, 14, 15, 16, 17, 18 },
-                {19, 20, 21, 22, 23, 24}
+                {1, 2, 3, 4, 5, 6, 1 , 2},
+                {7, 8, 9, 10 , 11, 12, 2, 7},
+                {13, 14, 15, 16, 17, 18, 8, 9 },
+                {19, 20, 21, 22, 23, 24, 12, 1},
+                {19, 20, 21, 22, 23, 24, 12, 1},
+                {5, 5, 6, 7, 8, 9, 7, 5 },
             };
 
             var vector = new double[,]
@@ -56,21 +58,21 @@ namespace LaboratoryThreads
                 {3 },
                 {4 },
                 {5 },
-                {6 }
+                {6 },
                 
             };
 
             BlockMultiplier<NumericMatrix> blockMultiplier = new BlockMultiplier<NumericMatrix>(new NumericMatrix(matrix));
-            blockMultiplier.OnGetPair += GetPairCallback;
+            blockMultiplier.OnNormalizedPair += GetPairCallback;
 
-            var res = blockMultiplier.ThreadMultiply(new NumericMatrix(matrix), new NumericMatrix(vector), 4);
+            var res = blockMultiplier.ThreadMultiply(new NumericMatrix(matrix), new NumericMatrix(vector), 8);
 
 
 
 
 
         }
-        private static void GetPairCallback(object sender, GetPairEventArgs arg)
+        private static void GetPairCallback(object sender, NormalizedPairEventArgs arg)
         {
             Console.WriteLine("Got normalized pair:");
             Console.WriteLine("First: " + arg.Pair.Item1);

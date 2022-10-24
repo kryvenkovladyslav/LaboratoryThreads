@@ -53,18 +53,13 @@ namespace LaboratoryThreads
 
         public BlockMultiplier() { }
 
-        public double[,] ThreadMultiply(double[,] matrix, double[,] vector, int threadsCount)
+        public double[,] ThreadMultiply(in double[,] matrix, in double[,] vector, int threadsCount)
         {
             var rowsCount = matrix.GetLength(0);
             var columnsCount = matrix.GetLength(1);
-            var resultVector = new double[rowsCount, vector.GetLength(0)];
 
             double[,] newMatrix;
             double[,] newVector;
-            double[,] currentMatrix = matrix;
-            double[,] currentVecotor = vector;
-            var newRowsCount = rowsCount;
-            var newColumnsCount = columnsCount;
 
             var threadMultiples = GetMultiples(threadsCount);
             var rowMultiples = GetMultiples(rowsCount);
@@ -74,18 +69,17 @@ namespace LaboratoryThreads
 
             while (specialNumber != 0)
             {
-                newRowsCount = newRowsCount % specialNumber == 0 ? newRowsCount : ModifyLength(newRowsCount, specialNumber);
-                newColumnsCount = newColumnsCount % specialNumber == 0 ? newColumnsCount : ModifyLength(newColumnsCount, specialNumber);
-                specialNumber = PlusMoral(GetMultiples(newRowsCount), GetMultiples(newColumnsCount), threadMultiples);
+                rowsCount = GetMultiples(rowsCount).Contains(specialNumber) ? rowsCount : ModifyLength(rowsCount, specialNumber);
+                columnsCount = GetMultiples(columnsCount).Contains(specialNumber) ? columnsCount : ModifyLength(columnsCount, specialNumber);
+                specialNumber = PlusMoral(GetMultiples(rowsCount), GetMultiples(rowsCount), threadMultiples);
             }
 
-            RefillElements(out newMatrix, out newVector, ref currentMatrix, ref currentVecotor, newRowsCount, newColumnsCount);
+            RefillElements(out newMatrix, out newVector, in matrix, in vector, rowsCount, columnsCount);
 
-
-            var pairs = GetPairsEqualsThreadCount(GetMultiples(newRowsCount), GetMultiples(newColumnsCount), threadsCount);
+            var pairs = GetPairsEqualsThreadCount(GetMultiples(rowsCount), GetMultiples(columnsCount), threadsCount);
             GotNewPairs(pairs);
 
-            var normalizedPair = NormalizePairs(pairs, newRowsCount, newColumnsCount);
+            var normalizedPair = NormalizePairs(pairs, rowsCount, columnsCount);
             GotNewPair(normalizedPair);
 
             var k = newMatrix.GetLength(0) / normalizedPair.Item1;
@@ -180,13 +174,13 @@ namespace LaboratoryThreads
         }
         private int ModifyLength(int currentLength, int specialNumber)
         {
-            while (currentLength % specialNumber != 0)
+            while (!GetMultiples(currentLength).Contains(specialNumber))
             {
                 currentLength++;
             }
             return currentLength;
         }
-        private void RefillElements(out double[,] newMatrix, out double[,] newVector, ref double[,] matrix, ref double[,] vector, int rows, int columns)
+        private void RefillElements(out double[,] newMatrix, out double[,] newVector, in double[,] matrix, in double[,] vector, int rows, int columns)
         {
             newMatrix = new double[rows, columns];
             newVector = new double[columns, 1];
@@ -208,7 +202,12 @@ namespace LaboratoryThreads
             int specialNumber = default;
             for (int i = threadsMultiples.Count - 1; i >= 0; i--)
             {
-                if (!(rowsMultiples.Contains(threadsMultiples[i]) || columnsMultiples.Contains(threadsMultiples[i])))
+                if (!columnsMultiples.Contains(threadsMultiples[i]))
+                {
+                    specialNumber = threadsMultiples[i];
+                    break;
+                }
+                else if (!rowsMultiples.Contains(threadsMultiples[i]))
                 {
                     specialNumber = threadsMultiples[i];
                     break;
@@ -262,7 +261,7 @@ namespace LaboratoryThreads
         {
             List<int> result = new List<int>();
 
-            for (int i = number; i > 1; i--)
+            for (int i = number - 1; i > 0; i--)
             {
                 if (number % i == 0)
                 {

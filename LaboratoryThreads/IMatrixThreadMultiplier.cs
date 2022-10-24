@@ -2,6 +2,6 @@
 {
     public interface IMatrixThreadMultiplier
     {
-        public double[,] ThreadMultiply(double[,] matrix, double[,] vector, int threadsCount);
+        public double[,] ThreadMultiply(in double[,] matrix, in double[,] vector, int threadsCount);
     }
 }

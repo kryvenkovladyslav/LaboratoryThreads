@@ -1,4 +1,5 @@
 ﻿using LaboratoryThreads;
+using LaboratoryThreads.Exceptions;
 using System;
 using Xunit;
 

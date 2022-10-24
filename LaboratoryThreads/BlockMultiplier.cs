@@ -7,7 +7,10 @@ namespace LaboratoryThreads
 {
     public sealed class BlockMultiplier : IMatrixThreadMultiplier
     {
+        public event EventHandler<FindSpecialParametersEvetArgs> OnFoundSpecialParameters;
         public event EventHandler<NormalizedPairEventArgs> OnNormalizedPair;
+        public event EventHandler<CreateBlocksEventArgs> OnCreatedBlocks;
+        public event EventHandler<FindNewPairsEventArgs> OnFoundNewPair;
 
         private sealed class ThreadMultiplier
         {
@@ -26,8 +29,8 @@ namespace LaboratoryThreads
 
             public void Perform()
             {
-                
-                ThreadPool.QueueUserWorkItem(callBack => 
+
+                ThreadPool.QueueUserWorkItem(callBack =>
                 {
                     for (int i = 0; i < Block.Rows; i++)
                     {
@@ -47,9 +50,9 @@ namespace LaboratoryThreads
         private Block[,] blocks;
         private Block[,] blockVectors;
         private Block[,] resultBlockVectors;
-      
+
         public BlockMultiplier() { }
-       
+
         public double[,] ThreadMultiply(double[,] matrix, double[,] vector, int threadsCount)
         {
             var rowsCount = matrix.GetLength(0);
@@ -69,26 +72,25 @@ namespace LaboratoryThreads
 
             var specialNumber = PlusMoral(rowMultiples, columnMultiples, threadMultiples);
 
-           /* do
-            {
-               
-            } while (specialNumber != 0);*/
             while (specialNumber != 0)
             {
-                newRowsCount = rowsCount % 2 == 0 ? rowsCount : ModifyLength(rowsCount, specialNumber);
-                newColumnsCount = columnsCount % 2 == 0 ? columnsCount : ModifyLength(columnsCount, specialNumber);
+                newRowsCount = newRowsCount % specialNumber == 0 ? newRowsCount : ModifyLength(newRowsCount, specialNumber);
+                newColumnsCount = newColumnsCount % specialNumber == 0 ? newColumnsCount : ModifyLength(newColumnsCount, specialNumber);
                 specialNumber = PlusMoral(GetMultiples(newRowsCount), GetMultiples(newColumnsCount), threadMultiples);
             }
 
             RefillElements(out newMatrix, out newVector, ref currentMatrix, ref currentVecotor, newRowsCount, newColumnsCount);
 
+
             var pairs = GetPairsEqualsThreadCount(GetMultiples(newRowsCount), GetMultiples(newColumnsCount), threadsCount);
+            GotNewPairs(pairs);
 
             var normalizedPair = NormalizePairs(pairs, newRowsCount, newColumnsCount);
             GotNewPair(normalizedPair);
 
             var k = newMatrix.GetLength(0) / normalizedPair.Item1;
             var l = newMatrix.GetLength(1) / normalizedPair.Item2;
+            GotSpecialParameters(k, l);
 
             var threadMultipliers = new ThreadMultiplier[threadsCount];
             var resetEvents = new AutoResetEvent[threadsCount];
@@ -96,7 +98,7 @@ namespace LaboratoryThreads
             blocks = new Block[normalizedPair.Item1, normalizedPair.Item2];
             blockVectors = new Block[normalizedPair.Item1, normalizedPair.Item2];
             resultBlockVectors = new Block[normalizedPair.Item1, normalizedPair.Item2];
-            
+
 
             int index = default;
 
@@ -111,7 +113,7 @@ namespace LaboratoryThreads
                     }
                 }
             }
-           
+
             for (int i = 0; i < blocks.GetLength(0); i++)
             {
                 for (int j = 0; j < blocks.GetLength(1); j++)
@@ -132,10 +134,12 @@ namespace LaboratoryThreads
                 }
             }
 
+            GotCreatedBlocks(blocks, blockVectors);
+
             WaitHandle.WaitAll(resetEvents);
 
             int position = 0;
-            
+
             for (int i = 0; i < resultBlockVectors.GetLength(0); i++)
             {
                 for (int j = 0; j < resultBlockVectors.GetLength(1); j++)
@@ -258,7 +262,7 @@ namespace LaboratoryThreads
         {
             List<int> result = new List<int>();
 
-            for (int i = number - 1; i > 1; i--)
+            for (int i = number; i > 1; i--)
             {
                 if (number % i == 0)
                 {
@@ -270,12 +274,32 @@ namespace LaboratoryThreads
 
 
         #region events 
-        private void OnNewNormalizedPair(NormalizedPairEventArgs pair)
+        private void OnNewNormalizedPair(NormalizedPairEventArgs eventArgs)
         {
             var onEvent = Volatile.Read(ref OnNormalizedPair);
-            onEvent?.Invoke(this, pair);
+            onEvent?.Invoke(this, eventArgs);
         }
+        private void OnNewSpecialParameters(FindSpecialParametersEvetArgs evetArgs)
+        {
+            var onEvenet = Volatile.Read(ref OnFoundSpecialParameters);
+            onEvenet?.Invoke(this, evetArgs);
+        }
+        private void OnNewCreatedBlocks(CreateBlocksEventArgs eventArgs)
+        {
+            var onEvent = Volatile.Read(ref OnCreatedBlocks);
+            onEvent?.Invoke(this, eventArgs);
+        }
+        private void OnNewFoundPairs(FindNewPairsEventArgs eventArgs)
+        {
+            var onEvent = Volatile.Read(ref OnFoundNewPair);
+            onEvent?.Invoke(this, eventArgs);
+        }
+
+        private void GotNewPairs(List<(int, int)> pairs) => OnNewFoundPairs(new FindNewPairsEventArgs(pairs));
         private void GotNewPair((int, int) pair) => OnNewNormalizedPair(new NormalizedPairEventArgs(pair));
+        private void GotSpecialParameters(int k, int l) => OnNewSpecialParameters(new FindSpecialParametersEvetArgs(k, l));
+        private void GotCreatedBlocks(Block[,] matrices, Block[,] vectors) => OnNewCreatedBlocks(new CreateBlocksEventArgs(matrices, vectors));
+        private void GotRefilledMatrix(double[,] matix) { }
         #endregion
     }
 }

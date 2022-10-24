@@ -7,17 +7,6 @@ namespace LaboratoryThreads.Events
     {
         public (int, int) Pair { get; }
         public NormalizedPairEventArgs((int, int) pair) => Pair = pair;
-        public override string ToString()
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder
-                .Append("(")
-                .Append(Pair.Item1)
-                .Append(", ")
-                .Append(Pair.Item2)
-                .Append(")");
-
-            return stringBuilder.ToString();
-        }
+        public override string ToString() => Pair.ToString();
     }
 }

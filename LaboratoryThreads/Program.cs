@@ -1,21 +1,27 @@
 ﻿using LaboratoryThreads.Events;
 using System;
+using System.Collections.Generic;
 
 namespace LaboratoryThreads
 {
     class Program
     {
+        private static readonly List<int> threadsCount = new List<int>(new int[] { 4, 6, 8 });
+        private static BlockMultiplier blockMultiplier = new BlockMultiplier();
+        private static string answerMode = string.Empty;
+        private const string parallel = "PARALLEL";
+        private const string single = "SINGLE";
+        private static bool done = false;
         public static void Main(string[] args)
         {
-            var matrix = new double[,]
+            NumericMatrix matrix = new NumericMatrix(new double[,]
             {
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-                {1, 2, 3, 4, 5, 6, 7, 8, 9 },
-            };
+                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
+            });
 
-            var vector = new double[,]
+            NumericMatrix vector = new NumericMatrix(new double[,]
             {
                 {1 },
                 {2 },
@@ -25,30 +31,90 @@ namespace LaboratoryThreads
                 {6 },
                 {7 },
                 {8 },
-                {9 }
-            };
+                {9 },
+                {10 }
+            });
+
+            NumericMatrix result = null;
 
 
-            NumericMatrix first = new NumericMatrix(matrix);
-            NumericMatrix second = new NumericMatrix(vector);
-            var defaultMultiplication = first * second;
-            Console.WriteLine(defaultMultiplication);
+            while (!done)
+            {
+                Console.WriteLine("Choose a way you want to perform multiplication  [in SINGlE thread or in PARALLEL threading]: ");
+                var answerMode = Console.ReadLine().ToUpper();
 
+                switch (answerMode)
+                {
+                    case single:
+                        result = matrix * vector;
+                        done = true;
+                        break;
 
-            BlockMultiplier blockMultiplier = new BlockMultiplier();
-            NumericMatrix numericMatrix = new NumericMatrix(matrix);
-            var threadMultiplication = numericMatrix.TreadMultiply(blockMultiplier, new NumericMatrix(vector), 6);
-            Console.WriteLine(threadMultiplication);
+                    case parallel:
+                        Console.WriteLine("You can use only 4, 6 and 8 thread.");
+                        Console.Write("How many do you want:");
+                        var answer = int.TryParse(Console.ReadLine(), out int threadCount);
 
+                        if (answer != false && threadsCount.Contains(threadCount))
+                        {
+                            Console.Write("Do you want to see the multiplication process [YES or NO]: ");
+                            SetOutput(Console.ReadLine().ToUpper().Equals("YES") ? true : false);
+                            Console.WriteLine("\n");
 
+                            result = matrix.TreadMultiply(blockMultiplier, vector, threadCount);
+                            done = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Something went wrong.");
+                            Console.WriteLine("You must have choose wrong threads count or write string line. Retry...");
+                        }
+                        break;
 
+                    default:
+                        Console.WriteLine("Something went wrong.");
+                        Console.WriteLine("Retry...");
+                        break;
+                }
+                
+            }
 
+            Console.WriteLine("Result:");
+            Console.WriteLine(result);
         }
-        private static void GetPairCallback(object sender, NormalizedPairEventArgs arg)
+        private static void SetOutput(bool showOutput)
         {
-            Console.WriteLine("Got normalized pair:");
-            Console.WriteLine("First: " + arg.Pair.Item1);
-            Console.WriteLine("Second: " + arg.Pair.Item2);
+            if (showOutput)
+            {
+                blockMultiplier.OnNormalizedPair += GetNormalizedPairCallback;
+                blockMultiplier.OnCreatedBlocks += GetCreatedBlocksCallbak;
+                blockMultiplier.OnFoundNewPair += GetFindPairsCallBack;
+                blockMultiplier.OnFoundSpecialParameters += GetFindSpecialParametesCallbak;
+            }
+        }
+        private static void GetNormalizedPairCallback(object sender, NormalizedPairEventArgs args)
+        {
+            Console.WriteLine("Got normalized pair: " + args.ToString());
+        }
+        private static void GetCreatedBlocksCallbak(object sender, CreateBlocksEventArgs args)
+        {
+            Console.WriteLine("Created blocks:");
+            for (int i = 0; i < args.BlockMatrices.GetLength(0); i++)
+            {
+                for (int j = 0; j < args.BlockMatrices.GetLength(1); j++)
+                {
+                    Console.WriteLine(args.BlockMatrices[i, j]);
+                }
+            }
+        }
+        private static void GetFindSpecialParametesCallbak(object sender, FindSpecialParametersEvetArgs args)
+        {
+            Console.WriteLine("Found Parameters:");
+            Console.WriteLine(args.ToString());
+        }
+        private static void GetFindPairsCallBack(object sender, FindNewPairsEventArgs args)
+        {
+            Console.WriteLine("Found Pairs: " + args.ToString());
         }
     }
 }

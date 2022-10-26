@@ -64,7 +64,6 @@ namespace LaboratoryThreads
                             Console.Write("Do you want to see the multiplication process [YES or NO]: ");
                             SetOutput(Console.ReadLine().ToUpper().Equals("YES") ? true : false);
                             Console.WriteLine("\n");
-
                             result = matrix.TreadMultiply(blockMultiplier, vector, threadCount);
                             done = true;
                         }
